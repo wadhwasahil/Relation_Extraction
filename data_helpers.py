@@ -44,30 +44,6 @@ def word2id(word):
     return -1
 
 
-#
-# class w2v(object):
-#     def __init__(self):
-#         tf.load_op_library(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'word2vec_ops.so'))
-#         metafile = str(tf.train.get_checkpoint_state("data").model_checkpoint_path) + ".meta"
-#         self.sess = tf.Session()
-#         new_saver = tf.train.import_meta_graph(metafile)
-#         new_saver.restore(self.sess, tf.train.latest_checkpoint("data"))
-#         self.all_vars = tf.trainable_variables()
-#         init_op = tf.global_variables_initializer()
-#         self.sess.run(init_op)
-#
-#     def get_word_vector(self, word):
-#         if word != "UNK":
-#             word = word.lower()
-#         index = word2id(word)
-#         if index == -1:
-#             raise ValueError("{} doesn't exist in the vocablury.".format(word))
-#         else:
-#             yield (self.sess.run(self.all_vars[3][index]))
-#
-#     def close_session(self):
-#         del self.sess
-
 def get_word_vector():
     tf.load_op_library(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'word2vec_ops.so'))
     metafile = str(tf.train.get_checkpoint_state("data").model_checkpoint_path) + ".meta"
@@ -89,7 +65,6 @@ def batch_iter(doc, batch_size, num_epochs, shuffle=True):
         data.append(iter)
     # print("len", len(data))
     data = np.array(data)
-    print(data)
     data_size = len(data)
     num_batches_per_epoch = int((len(data) - 1) / batch_size) + 1
     for epoch in range(num_epochs):

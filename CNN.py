@@ -18,9 +18,14 @@ tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 tf.flags.DEFINE_float("lr", 0.01, "Learning rate")
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-tf.flags.DEFINE_string("filter_sizes", "5,6,7", "Comma-separated filter sizes (default: '3,4,5')")
+tf.flags.DEFINE_string("filter_sizes", "2,3", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 10, "Number of filters per filter size (default: 128)")
+tf.flags.DEFINE_float("dropout_keep_prob", 0.4, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_integer("num_epochs", 2, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
+tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
+
 FLAGS = tf.flags.FLAGS
 tokenizer = TweetTokenizer()
 
@@ -142,9 +147,9 @@ def lexical_level_features(df):
                 lf = np.vstack((l1, l2, l3, l4))
                 relation = row['relType']
                 if relation == "valid":
-                    y = 1
+                    y = [0, 1]
                 else:
-                    y = 0
+                    y = [1, 0]
                 yield np.asarray((lf, y))
             except Exception as e: print(e)
 
@@ -154,10 +159,12 @@ def get_position_vectors(distance):
 def build_sentence_model():
     pass
 
+def get_batches():
+    time_start = time.time()
+    lexical_features = lexical_level_features(df)
+    batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, FLAGS.num_epochs)
+    return batch_iterator
+
 df = data_helpers.read_data()
-count = 100
+count = 500
 word_vector = list(data_helpers.get_word_vector())
-time_start = time.time()
-lexical_features = lexical_level_features(df)
-batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, FLAGS.num_epochs)
-print("Total time taken (in sec) => ", time.time() - time_start)

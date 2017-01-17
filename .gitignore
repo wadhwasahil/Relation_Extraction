@@ -3,3 +3,4 @@ data/
 *.pyc
 *.so
 *.cc
+.idea/
