@@ -1,22 +1,6 @@
 import tensorflow as tf
 import re
 
-TOWER_NAME = 'tower'
-def _activation_summary(x):
-  """Helper to create summaries for activations.
-  Creates a summary that provides a histogram of activations.
-  Creates a summary that measures the sparsity of activations.
-  Args:
-    x: Tensor
-  Returns:
-    nothing
-  """
-  # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
-  # session. This helps the clarity of presentation on tensorboard.
-  tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', x.op.name)
-  tf.contrib.deprecated.histogram_summary(tensor_name + '/activations', x)
-  tf.contrib.deprecated.scalar_summary(tensor_name + '/sparsity',
-                                       tf.nn.zero_fraction(x))
 
 class TextCNN(object):
     def __init__(self, filter_sizes, num_filters, vec_shape, l2_reg_lambda=0.0, num_classes=2):
@@ -26,6 +10,7 @@ class TextCNN(object):
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
         l2_loss = tf.constant(0.0)
         self.input_x_expanded = tf.expand_dims(self.input_x, -1)
+        print(self.input_x_expanded)
         # Create a convolution + maxpool layer for each filter size
         pooled_outputs = []
         for i, filter_size in enumerate(filter_sizes):
@@ -41,6 +26,7 @@ class TextCNN(object):
                     padding="VALID",
                     name="conv")
                 # Apply nonlinearity
+                # TODO replace relu with tanh
                 h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
                 # Maxpooling over the outputs
                 pooled = tf.nn.max_pool(
@@ -53,7 +39,6 @@ class TextCNN(object):
         num_filters_total = num_filters * len(filter_sizes)
         self.h_pool = tf.concat(3, pooled_outputs)
         self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
-
         # Add dropout
         with tf.name_scope("dropout"):
             self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
@@ -77,7 +62,6 @@ class TextCNN(object):
 
             # Accuracy
             with tf.name_scope("accuracy"):
-                print(self.predictions)
                 correct_predictions = tf.equal(self.predictions, tf.argmax(self.input_y, 1))
                 self.accuracy = tf.reduce_mean(tf.cast(correct_predictions, "float"), name="accuracy")
 
