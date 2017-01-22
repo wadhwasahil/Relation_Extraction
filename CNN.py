@@ -104,6 +104,7 @@ def w2v(word):
 
 
 
+count = 100
 
 def lexical_level_features(df):
     for index, row in df.iterrows():
@@ -194,6 +195,11 @@ def get_batches():
     batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, FLAGS.num_epochs)
     return batch_iterator
 
+def get_batches_test():
+    df = data_helpers.read_data("/home/sahil/ML-bucket/test.csv")
+    lexical_features = lexical_level_features(df)
+    batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, FLAGS.num_epochs)
+    return batch_iterator
 
 df = data_helpers.read_data()
 word_vector = list(data_helpers.get_word_vector())
@@ -206,7 +212,6 @@ pos_vec_entities = np.random.uniform(-1, 1, (4, FLAGS.distance_dim))
 # beginning and end of sentence embeddings
 beg_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
 end_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
-count = 1000
 '''Find the max length b/w entities'''
 # for index, row in df.iterrows():
 #     message = row['Message']
@@ -227,22 +232,3 @@ count = 1000
 #     l = get_tokens(tokenizer.tokenize(message[end1: start2]))
 #     sequence_length = max(sequence_length, len(l))
 
-# flag = 0
-# i = 0
-# for batch in enumerate(get_batches()):
-#     X_train, y_train = zip(*batch)
-#     for i in X_train:
-#         for j in i:
-#             for k in j:
-#                 if np.isnan(k):
-#                     flag = 1
-#                 if flag == 1:
-#                     break
-#             if flag == 1:
-#                 break
-#         if flag == 1:
-#             break
-#     print(i, flag)
-#     i += 1
-#     if flag == 1:
-#         break

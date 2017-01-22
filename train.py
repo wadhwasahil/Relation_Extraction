@@ -77,14 +77,13 @@ with tf.Graph().as_default():
             # train_summary_writer.add_summary(summaries, step)
 
 
-        def dev_step(x_text_dev, x_num_dev, y_batch, writer=None):
+        def dev_step(x_text_dev, y_batch, writer=None):
             """
             Evaluates model on a dev set
             """
             feed_dict = {
                 cnn.input_x: x_text_dev,
                 cnn.input_y: y_batch,
-                cnn.features: x_num_dev,
                 cnn.dropout_keep_prob: 1.0
             }
             step, loss, accuracy = sess.run(
@@ -97,14 +96,16 @@ with tf.Graph().as_default():
 
         print("Loading batches...")
         batch_iter = CNN.get_batches()
+        batch_iter_test = CNN.get_batches_test()
         for batch in batch_iter:
             X_train , y_train = zip(*batch)
-            train_step(X_train, y_train)
+            X_test, y_test = zip(*(next(batch_iter_test)))
+            train_step(np.asarray(X_train), np.asarray(y_train))
             current_step = tf.train.global_step(sess, global_step)
             if current_step % CNN.FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
-            # dev_step(x_text_dev,x_num_dev, y_dev, writer=dev_summary_writer)
-            print("")
+                dev_step(np.asarray(X_test), np.asarray(y_test))
+                print("")
             # if current_step % CNN.FLAGS.checkpoint_every == 0:
                 # path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                 # print("Saved model checkpoint to {}\n".format(path))

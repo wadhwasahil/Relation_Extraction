@@ -4,7 +4,6 @@ import re
 import os
 import tensorflow as tf
 import numpy as np
-import gc
 
 file_path = "/home/sahil/ML-bucket/train.csv"
 
