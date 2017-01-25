@@ -4,3 +4,4 @@ data/
 *.so
 *.cc
 .idea/
+model

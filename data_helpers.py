@@ -5,7 +5,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-file_path = "/home/sahil/ML-bucket/train.csv"
+file_path = "/home/sahil/ML-bucket/trainFinal.csv"
 
 
 def read_data(file=file_path):
@@ -28,9 +28,11 @@ def read_data(file=file_path):
 
 # TODO use space splitter and then strip the word
 # TODO change regex to [a-z0-9].+
+
 def is_word(word):
-    if re.match(r'\A[\w]+\Z', word):
-        return True
+    for char in word:
+        if char.isalpha() or char.isdigit():
+            return True
     return False
 
 
@@ -54,11 +56,11 @@ def get_word_vector():
     sess.run(init_op)
     yield sess.run(all_vars[3])
 
-
 def batch_iter(doc, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
     """
+    # print(np.asarray(a).shape)
     data = list()
     for iter in doc:
         data.append(iter)

@@ -14,7 +14,7 @@ with tf.Graph().as_default():
     sess = tf.Session(config=session_conf)
     with sess.as_default():
         cnn = TextCNN(filter_sizes=list(map(int, CNN.FLAGS.filter_sizes.split(","))),
-            num_filters=CNN.FLAGS.num_filters, vec_shape=(CNN.FLAGS.sequence_length + 2, CNN.FLAGS.embedding_size * CNN.FLAGS.window_size + 2 * CNN.FLAGS.distance_dim),
+            num_filters=CNN.FLAGS.num_filters, vec_shape=(CNN.FLAGS.sequence_length, CNN.FLAGS.embedding_size * CNN.FLAGS.window_size + 2 * CNN.FLAGS.distance_dim),
             l2_reg_lambda=CNN.FLAGS.l2_reg_lambda)
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
@@ -94,7 +94,6 @@ with tf.Graph().as_default():
             # if writer:
             #     writer.add_summary(summaries, step)
 
-        print("Loading batches...")
         batch_iter = CNN.get_batches()
         batch_iter_test = CNN.get_batches_test()
         for batch in batch_iter:
