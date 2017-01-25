@@ -124,8 +124,8 @@ count = 100
 def lexical_level_features(df):
     for index, row in df.iterrows():
         try:
-            if index >= count:
-                break
+            # if index >= count:
+            #     break
             print("======================================")
             print(index)
             message = row['Message'].lower()
@@ -324,7 +324,7 @@ def get_batches_test():
     print("Loading test data...")
     df = data_helpers.read_data("/home/sahil/ML-bucket/test.csv")
     lexical_features = lexical_level_features(df)
-    batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, FLAGS.num_epochs)
+    batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, 1, shuffle=False)
     return batch_iterator
 
 

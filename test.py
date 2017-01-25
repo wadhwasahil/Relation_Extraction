@@ -1,5 +1,6 @@
 import codecs
 import tensorflow as tf
+import CNN
 import glob
 import pandas as pd
 import numpy as np
@@ -13,13 +14,9 @@ import sklearn as sk
 from sklearn.metrics import confusion_matrix
 
 # Eval Parameters
-tf.flags.DEFINE_integer("batch_size", 100, "Batch Size (default: 64)")
 tf.flags.DEFINE_string("checkpoint_dir", "data/1485336002/checkpoints", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("eval_train", False, "Evaluate on all training data")
 
-# Misc Parameters
-tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
-tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -29,13 +26,32 @@ graph = tf.Graph()
 
 with graph.as_default():
     session_conf = tf.ConfigProto(
-      allow_soft_placement=FLAGS.allow_soft_placement,
-      log_device_placement=FLAGS.log_device_placement)
+      allow_soft_placement=CNN.FLAGS.allow_soft_placement,
+      log_device_placement=CNN.FLAGS.log_device_placement)
     sess = tf.Session(config=session_conf)
     with sess.as_default():
         # Load the saved meta graph and restore variables
         saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(sess, checkpoint_file)
-        all_vars = tf.trainable_variables()
-        for var in all_vars:
-            print(var.name)
+
+        # Get the placeholders from the graph by name
+        input_x = graph.get_operation_by_name("X_train").outputs[0]
+        dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
+
+        # Tensors we want to evaluate
+        predictions = graph.get_operation_by_name("output/predictions").outputs[0]
+
+        # Generate batches for one epoch
+        target = []
+        predicted = []
+        batches = CNN.get_batches_test()
+        for batch in batches:
+            X_test , y_test = zip(*batch)
+            batch_predictions = sess.run(predictions, {input_x: X_test,dropout_keep_prob: 1.0})
+            for y in y_test:
+                if y[0] == 1:
+                    target = np.concatenate([target, [0]])
+                else:
+                    target = np.concatenate([target, [1]])
+            predicted = np.concatenate([predicted, batch_predictions])
+        print(float(sum(target == predicted))/ float(predicted.shape[0]))
