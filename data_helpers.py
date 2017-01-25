@@ -36,25 +36,25 @@ def is_word(word):
     return False
 
 
-def word2id(word):
-    word = 'b\'' + word + '\''
-    with open("data/vocab.txt") as f:
-        for i, line in enumerate(f):
-            if line.split()[0] == word:
-                return i
-    return -1
+# def word2id(word):
+#     word = 'b\'' + word + '\''
+#     with open("data/vocab.txt") as f:
+#         for i, line in enumerate(f):
+#             if line.split()[0] == word:
+#                 return i
+#     return -1
 
 
-def get_word_vector():
-    tf.load_op_library(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'word2vec_ops.so'))
-    metafile = str(tf.train.get_checkpoint_state("data").model_checkpoint_path) + ".meta"
-    sess = tf.Session()
-    new_saver = tf.train.import_meta_graph(metafile)
-    new_saver.restore(sess, tf.train.latest_checkpoint("data"))
-    all_vars = tf.trainable_variables()
-    init_op = tf.global_variables_initializer()
-    sess.run(init_op)
-    yield sess.run(all_vars[3])
+# def get_word_vector():
+#     tf.load_op_library(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'word2vec_ops.so'))
+#     metafile = str(tf.train.get_checkpoint_state("data").model_checkpoint_path) + ".meta"
+#     sess = tf.Session()
+#     new_saver = tf.train.import_meta_graph(metafile)
+#     new_saver.restore(sess, tf.train.latest_checkpoint("data"))
+#     all_vars = tf.trainable_variables()
+#     init_op = tf.global_variables_initializer()
+#     sess.run(init_op)
+#     yield sess.run(all_vars[3])
 
 def batch_iter(doc, batch_size, num_epochs, shuffle=True):
     """

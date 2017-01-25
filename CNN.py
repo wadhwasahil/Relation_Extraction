@@ -118,14 +118,14 @@ def get_right_word(message, start):
 #         return word_vector[0][index]
 
 
-count = 4401
+count = 100
 
 
 def lexical_level_features(df):
     for index, row in df.iterrows():
         try:
-            # if index >= count:
-            #     break
+            if index >= count:
+                break
             print("======================================")
             print(index)
             message = row['Message'].lower()
@@ -329,7 +329,6 @@ def get_batches_test():
 
 
 df = data_helpers.read_data()
-word_vector = list(data_helpers.get_word_vector())
 
 np.random.seed(42)
 pivot = 2 * FLAGS.sequence_length + 1
@@ -340,6 +339,7 @@ pos_vec = np.random.uniform(-1, 1, (pivot + 1, FLAGS.distance_dim))
 beg_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
 end_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
 extra_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
+
 # sequence_length = 0
 # ain = ""
 '''Find the max length b/w entities'''
@@ -380,3 +380,6 @@ extra_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
 #     if tot_len > sequence_length:
 #         ain = (tot_len, entity1, entity2, message[beg:fin])
 #     sequence_length = max(sequence_length, tot_len)
+#
+# print(sequence_length)
+# print(ain)
