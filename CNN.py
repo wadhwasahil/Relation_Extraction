@@ -28,6 +28,7 @@ tf.flags.DEFINE_float("l2_reg_lambda", 3.0, "L2 regularizaion lambda (default: 0
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("window_size", 3, "n-gram")
 tf.flags.DEFINE_integer("sequence_length", 204, "max tokens b/w entities")
+tf.flags.DEFINE_integer("K", 4, "K-fold cross validation")
 FLAGS = tf.flags.FLAGS
 tokenizer = TweetTokenizer()
 
