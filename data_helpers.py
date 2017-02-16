@@ -5,7 +5,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-file_path = "/home/sahil/ML-bucket/trainFinal.csv"
+file_path = "/home/sahil/ML-bucket/data/train_new.csv"
 
 
 def read_data(file=file_path):
@@ -60,7 +60,6 @@ def batch_iter(doc, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
     """
-    # print(np.asarray(a).shape)
     data = list()
     for iter in doc:
         data.append(iter)

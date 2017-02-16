@@ -6,8 +6,10 @@ import numpy as np
 from nltk.tokenize import TweetTokenizer
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 import tensorflow as tf
+import pandas as pd
 import re
 import itertools
+import math
 import traceback
 import gensim, logging
 
@@ -24,11 +26,12 @@ tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (
 tf.flags.DEFINE_float("dropout_keep_prob", 0.4, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_integer("num_epochs", 1000, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
-tf.flags.DEFINE_float("l2_reg_lambda", 3.0, "L2 regularizaion lambda (default: 0.0)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("window_size", 3, "n-gram")
 tf.flags.DEFINE_integer("sequence_length", 204, "max tokens b/w entities")
 tf.flags.DEFINE_integer("K", 4, "K-fold cross validation")
+tf.flags.DEFINE_float("early_threshold", 0.5, "Threshold to stop the training")
 FLAGS = tf.flags.FLAGS
 tokenizer = TweetTokenizer()
 
@@ -36,7 +39,7 @@ invalid_word = "UNK"
 
 '''By default returns UNK if input given is empty'''
 
-model = gensim.models.Word2Vec.load("model")
+model = gensim.models.Word2Vec.load("~/Desktop/Relation_Extraction/model")
 
 
 def word2vec(word):
@@ -221,7 +224,7 @@ def lexical_level_features(df):
             # middle tokens
             in_matrix = []
             for idx, token in enumerate(in_tokens):
-                word_vec, pv1, pv2 = word2vec(token), pos_vec[idx + 1], pos_vec[idx - m_len]
+                word_vec, pv1, pv2 = word2vec(token), pos_vec[idx + 1], pos_vec[idx - m_len + pivot]
                 in_matrix.append([word_vec, pv1, pv2])
 
             # right tokens
@@ -328,6 +331,15 @@ def get_batches_test():
     batch_iterator = data_helpers.batch_iter(lexical_features, FLAGS.batch_size, 1, shuffle=False)
     return batch_iterator
 
+def get_validation_data():
+    df = data_helpers.read_data("/home/sahil/ML-bucket/data/validation.csv")
+    lexical_features = lexical_level_features(df)
+    X_val = list()
+    Y_val = list()
+    for iter in lexical_features:
+        X_val.append(iter[0])
+        Y_val.append(iter[1])
+    return np.asarray(X_val), np.asarray(Y_val)
 
 df = data_helpers.read_data()
 
@@ -384,3 +396,19 @@ extra_emb = np.random.uniform(-1, 1, FLAGS.embedding_size)
 #
 # print(sequence_length)
 # print(ain)
+
+def hack():
+    df = pd.read_csv("/home/sahil/Downloads/test.csv")
+    for index, row in df.iterrows():
+        arr = [[float(row['x1']), float(row['x2']), float(row['x3'])]]
+        y = float(row['y'])
+        if y == 0.0:
+            y = [1.0, 0.0]
+        else:
+            y = [0.1, 1.0]
+        yield np.asarray((np.asarray(arr), np.asarray(y)))
+
+def fun():
+    r = hack()
+    s = data_helpers.batch_iter(r, 64, 1)
+    return s

@@ -75,6 +75,7 @@ with tf.Graph().as_default():
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
             train_summary_writer.add_summary(summaries, step)
+            return loss
 
 
         def dev_step(x_text_dev, y_batch, writer=None):
@@ -91,39 +92,26 @@ with tf.Graph().as_default():
                 feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-            return loss, accuracy
+            return loss
             # if writer:
             #     writer.add_summary(summaries, step)
 
         batch_iter = CNN.get_batches()
+        X_val, Y_val = CNN.get_validation_data()
         for batch in batch_iter:
             loss = accuracy = 0.0
             X_train, y_train = zip(*batch)
-            X_train, y_train = np.asarray(X_train), np.asarray(y_train)
-            n_times_val = int(X_train.shape[0]) / int(CNN.FLAGS.K)
-            print(X_train.shape)
-            for k in range(CNN.FLAGS.K):
-                X_val = X_train[k * n_times_val:(k + 1) * n_times_val][:][:]
-                Y_val = y_train[k * n_times_val:(k + 1) * n_times_val][:]
-                X = X_train[0: k * n_times_val][:][:]
-                X = np.concatenate((X, X_train[(k + 1) * n_times_val:][:][:]), 0)
-                Y = y_train[0: k * n_times_val][:]
-                Y = np.concatenate((Y, y_train[(k + 1) * n_times_val:][:]), 0)
-                # print(X.shape, Y.shape, X_val.shape, Y_val.shape)
-                train_step(X, Y)
-                current_step = tf.train.global_step(sess, global_step)
+            X_train, Y_train = np.asarray(X_train), np.asarray(y_train)
+            train_loss = train_step(X_train, Y_train)
+            current_step = tf.train.global_step(sess, global_step)
+            if current_step % CNN.FLAGS.evaluate_every == 0:
                 print("Evaluation:")
-                l, a = dev_step(np.asarray(X_val), np.asarray(Y_val))
-                loss += l
-                accuracy += a
-                print("")
-                if current_step % CNN.FLAGS.checkpoint_every == 0:
-                    path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-                    print("Saved model checkpoint to {}\n".format(path))
-            print(np.sum(loss), np.sum(accuracy))
-            loss = float(loss) / 4.0
-            accuracy = float(accuracy) / 4.0
-            print("{}-Fold results".format(CNN.FLAGS.K))
-            print("Loss = %f, Accuracy = %f" %(loss, accuracy))
-            print("-------------------")
+                test_loss = dev_step(np.asarray(X_val), np.asarray(Y_val))
+                if abs(test_loss - train_loss) > CNN.FLAGS.early_threshold:
+                    exit(0)
+            print("")
+            if current_step % CNN.FLAGS.checkpoint_every == 0:
+                path = saver.save(sess, checkpoint_prefix, global_step=current_step)
+                print("Saved model checkpoint to {}\n".format(path))
+        print("-------------------")
         print("Finished in time %0.3f" % (time.time() - start_time))

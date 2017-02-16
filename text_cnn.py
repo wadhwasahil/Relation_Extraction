@@ -39,7 +39,7 @@ class TextCNN(object):
         self.h_pool = tf.concat(3, pooled_outputs)
         self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
         # Add dropout
-        with tf.name_scope("tanh"):
+        with tf.name_scope("dropout"):
             self.h_tanh = tf.nn.tanh(self.h_pool_flat)
             # self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
 
@@ -57,7 +57,7 @@ class TextCNN(object):
 
             # CalculateMean cross-entropy loss
             with tf.name_scope("loss"):
-                losses = tf.nn.softmax_cross_entropy_with_logits(self.scores, self.input_y)
+                losses = tf.nn.softmax_cross_entropy_with_logits(self.scores, self.input_y, name="cnn_loss")
                 self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
 
             # Accuracy

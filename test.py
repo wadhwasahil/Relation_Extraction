@@ -37,8 +37,8 @@ with graph.as_default():
         # Get the placeholders from the graph by name
         input_x = graph.get_operation_by_name("X_train").outputs[0]
         dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
-
         # Tensors we want to evaluate
+        scores = graph.get_operation_by_name("output/scores").outputs[0]
         predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
         # Generate batches for one epoch
@@ -47,7 +47,7 @@ with graph.as_default():
         batches = CNN.get_batches_test()
         for batch in batches:
             X_test , y_test = zip(*batch)
-            batch_predictions = sess.run(predictions, {input_x: X_test,dropout_keep_prob: 1.0})
+            scores, batch_predictions = sess.run([scores, predictions], {input_x: X_test,dropout_keep_prob: 1.0})
             for y in y_test:
                 if y[0] == 1:
                     target = np.concatenate([target, [0]])
