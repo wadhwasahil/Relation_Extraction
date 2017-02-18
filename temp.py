@@ -8,6 +8,7 @@ import data_helpers
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 import gensim
 import numpy as np
+import gc
 
 t1 = time.time()
 sc = SparkContext(appName="HBaseInputFormat")
@@ -383,9 +384,7 @@ def save_message_table(rdd):
             "mapreduce.job.output.value.class": "org.apache.hadoop.io.Writable"}
     rdd.saveAsNewAPIHadoopDataset(conf=conf, keyConverter=keyConv, valueConverter=valueConv)
 
-def get_input(rows):
-    global model
-    model = gensim.models.Word2Vec.load("~/Desktop/Relation_Extraction/model")
+def get_input(model, rows):
     for row in rows:
         rowkey = row[0]
         message = row[1]
@@ -433,16 +432,14 @@ def strip_row(row):
         if row[l - i - 1] == '-':
             cnt += 1
 
-hbase_rdd = hbase_rdd.map(lambda x: x[1]).map(
-    lambda x: x.split("\n"))  # message_rdd = hbase_rdd.map(lambda x:x[0]) will give only row-key
-data_rdd = hbase_rdd.flatMap(lambda x: get_valid_items(x))
-data_rdd = data_rdd.filter(lambda x: filter_rows(x))
-data_rdd = data_rdd.mapPartitions(lambda row: get_input(row))
-data_rdd = data_rdd.filter(lambda x: filter_rows(x))
-
 
 def predict(rows):
+    gc.collect()
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+    print("Loading word2vec model...............")
+    global model
+    model = gensim.models.Word2Vec.load("~/Desktop/Relation_Extraction/model")
+    print("Model loaded..........................")
     graph = tf.Graph()
     checkpoint_file = "/home/sahil/Desktop/Relation_Extraction/data/1485336002/checkpoints/model-300"
     print("Loading model................................")
@@ -464,8 +461,22 @@ def predict(rows):
         predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
         # Generate batches for one epoch
+
+
         for row in rows:
-            X_test = [row[1]]
+            message = row[1]
+            start1 = row[2]
+            end1 = row[3]
+            start2 = row[4]
+            end2 = row[5]
+            if start2 < start1:  # swap if entity2 comes first
+                start1, start2 = start2, start1
+                end1, end2 = end2, end1
+            # print(message, start1, end1, start2, end2)
+            input_vec = generate_vector(message, start1, end1, start2, end2)
+            if input_vec is None:
+                continue
+            X_test = [input_vec]
             score, batch_predictions = sess.run([scores, predictions], {input_x: X_test, dropout_keep_prob: 1.0})
             print(score, batch_predictions, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
             yield (row[0], score[0], batch_predictions[0])
@@ -496,6 +507,13 @@ def transform_input(row):
     tuple = (rowkey, [rowkey, "f", "cnn_flag", val])
     return tuple
 
+
+hbase_rdd = hbase_rdd.map(lambda x: x[1]).map(
+    lambda x: x.split("\n"))  # message_rdd = hbase_rdd.map(lambda x:x[0]) will give only row-key
+data_rdd = hbase_rdd.flatMap(lambda x: get_valid_items(x))
+data_rdd = data_rdd.filter(lambda x: filter_rows(x))
+#data_rdd = data_rdd.mapPartitions(lambda row: get_input(row))
+#data_rdd = data_rdd.filter(lambda x: filter_rows(x))
 
 result = data_rdd.mapPartitions(lambda iter: predict(iter))
 result = result.flatMap(lambda x: transform(x))
